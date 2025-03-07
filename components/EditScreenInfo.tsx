@@ -1,40 +1,83 @@
-import React, { useState } from 'react';
-import { Text, View } from 'react-native';
-
-import Button from './Button';
 import { Weather } from 'Interfaces/WeatherInterface';
+import * as Location from 'expo-location';
+import React, { useState, useEffect } from 'react';
+import { Text, View, Alert } from 'react-native';
+
+import ButtonCustom from './ButtonCustom';
+import Loading from './Loading';
 
 export const EditScreenInfo = ({ path }: { path: string }) => {
-  const title = 'Titulo:';
-  const description = 'Descripcion blablabla.';
-  const [WeatherInputValue, setWeatherValue] = useState('');
+  const [WeatherInputValue, setWeatherValue] = useState(0);
   const [isDisabledButtonValue, setIsDisabledButtonValue] = useState(false);
-  const urlApi = 'https://67cb29063395520e6af489a3.mockapi.io/api/v1/weather';
+  const [isLoadingValue, setIsLoadingValue] = useState(false);
+
+  const [latitude, setLatitude] = useState(0);
+  const [longitude, setLongitude] = useState(0);
+
+  const [url, setUrl] = useState(
+    'https://api.open-meteo.com/v1/forecast?latitude=20.73918000&longitude=-89.28490000&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m'
+  );
 
   const viewWeather = async (): Promise<void> => {
     setIsDisabledButtonValue(true);
-
-    await fetch(urlApi)
+    setIsLoadingValue(true);
+    await fetch(url)
       .then((res) => res.json())
-      .then((weatherData: Weather[]) => {
-        if (weatherData && weatherData.length) setWeatherValue(weatherData[0].weather);
+      .then((weatherData: Weather) => {
+        if (weatherData) setWeatherValue(weatherData.current.temperature_2m);
       });
-
     setIsDisabledButtonValue(false);
+    setIsLoadingValue(false);
   };
+
+  const createTwoButtonAlert = () =>
+    Alert.alert('Hubo un problema!', 'Debe aceptar la localización', [{ text: 'OK' }]);
+
+  useEffect(() => {
+    const getLocation = async (): Promise<void> => {
+      setIsLoadingValue(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') createTwoButtonAlert();
+      else {
+        const currentLocation = await Location.getCurrentPositionAsync({});
+        setLatitude(currentLocation.coords.latitude);
+        setLongitude(currentLocation.coords.longitude);
+        setUrl(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`
+        );
+      }
+    };
+
+    getLocation()
+      .catch(console.error)
+      .finally(() => setIsLoadingValue(false));
+  }, []);
 
   return (
     <View>
       <View className={styles.getStartedContainer}>
-        <View className={styles.codeHighlightContainer + styles.homeScreenFilename}>
-          <Text>La temperatura es de {WeatherInputValue} grados celsius</Text>
-        </View>
-        {WeatherInputValue !== '' ? (
-          <Text className={styles.getStartedText}>{description}</Text>
+        {isLoadingValue ? (
+          <Loading />
+        ) : WeatherInputValue ? (
+          <View>
+            <Text className={styles.getStartedText}>
+              La temperatura es de {WeatherInputValue} grados celsius
+            </Text>
+          </View>
         ) : null}
-        <Button color="primary" handleClick={viewWeather} isDisabled={isDisabledButtonValue}>
-          Ver el clima
-        </Button>
+
+        {!isLoadingValue && (
+          <View className={styles.helpLink}>
+            <ButtonCustom
+              type="button"
+              color="primary"
+              handleClick={viewWeather}
+              isDisabled={isDisabledButtonValue}
+              title="Ver el clima"
+            />
+          </View>
+        )}
       </View>
     </View>
   );

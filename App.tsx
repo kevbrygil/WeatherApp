@@ -6,7 +6,7 @@ import './global.css';
 export default function App() {
   return (
     <>
-      <ScreenContent title="Home" path="App.tsx" />
+      <ScreenContent title="Weather Api" path="App.tsx" />
       <StatusBar style="auto" />
     </>
   );

@@ -1,5 +1,7 @@
+import { View, TouchableOpacity, Text } from 'react-native';
+
 interface Props {
-  children: React.ReactNode;
+  title: string;
   color: 'primary' | 'success' | 'secondary' | 'warning' | 'danger';
   handleClick?: () => void;
   type?: 'button' | 'submit';
@@ -7,7 +9,14 @@ interface Props {
   isDisabled: boolean;
 }
 
-const Button: React.FC<Props> = ({ children, color, handleClick, type, extraClasses, isDisabled }) => {
+const ButtonCustom: React.FC<Props> = ({
+  title,
+  color,
+  handleClick,
+  type,
+  extraClasses,
+  isDisabled,
+}) => {
   let colors: string;
   switch (color) {
     case 'primary':
@@ -25,13 +34,17 @@ const Button: React.FC<Props> = ({ children, color, handleClick, type, extraClas
     default:
       colors = 'bg-red-500 hover:bg-red-600';
   }
-  const classes = `rounded text-white py-2 px-2 ${colors} ${extraClasses}`;
+  const classes = `rounded text-white py-2 px-2 ${colors}`;
 
   return (
-    <button className={classes} onClick={handleClick} type={type} disabled={isDisabled} >
-      {children}
-    </button>
+    <View>
+      <TouchableOpacity className={classes} onPress={handleClick}>
+        <Text className={extraClasses ? extraClasses : 'text-lg font-bold text-white'}>
+          {title}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
-export default Button;
+export default ButtonCustom;
